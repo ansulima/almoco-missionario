@@ -1,6 +1,6 @@
 class Appointment < ApplicationRecord
   validates :data, presence: true, uniqueness: true
-  validates :nome, :telefone, :endereco, presence: true
+  validates :nome, :telefone, presence: true
   
   scope :for_month, ->(year, month) { 
     where(data: Date.new(year, month, 1)..Date.new(year, month, -1)) 

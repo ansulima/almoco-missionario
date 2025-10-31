@@ -1,6 +1,8 @@
+<div id="modals"></div>
+
 <div class="container mx-auto px-4 py-8">
   <h1 class="text-3xl font-bold text-center mb-8">
-    Agendamento de Almoços Missionários
+    Almoço dos Missionários
   </h1>
   
   <div class="max-w-4xl mx-auto">
@@ -58,8 +60,14 @@
           </div>
           <% if appointment %>
             <div class="text-sm mt-2 text-red-800 font-semibold">
-              <%= appointment.nome %>
-            </div>
+            <%= appointment.nome %>
+          </div>
+          <div class="mt-2">
+            <%= button_to 'Cancelar', appointment_path(appointment), 
+                method: :delete, 
+                data: { confirm: 'Tem certeza que deseja cancelar este agendamento?' },
+                class: 'text-xs text-red-600 hover:text-red-800' %>
+          </div>
           <% end %>
         </div>
       <% end %>
@@ -72,7 +80,7 @@
   <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
     <h3 class="text-2xl font-bold mb-4">Agendar Almoço</h3>
     
-    <%= form_with model: Appointment.new, local: true, class: "space-y-4" do |f| %>
+    <%= form_with model: Appointment.new, class: "space-y-4" do |f| %>
       <%= f.hidden_field :data, id: "appointment_data" %>
       
       <div>
@@ -85,12 +93,7 @@
         <%= f.text_field :telefone, required: true, placeholder: "(00) 00000-0000", class: "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
       </div>
       
-      <div>
-        <%= f.label :endereco, "Endereço:", class: "block font-semibold mb-2" %>
-        <%= f.text_area :endereco, required: true, rows: 3, class: "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
-      </div>
-      
-      <div class="flex gap-4">
+      <div class="flex gap-4 mt-6">
         <%= f.submit "Confirmar Agendamento", class: "bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 flex-1 cursor-pointer" %>
         <button type="button" onclick="closeModal()" class="bg-gray-300 px-6 py-2 rounded hover:bg-gray-400">
           Cancelar
@@ -113,6 +116,13 @@
   // Fechar modal ao clicar fora dele
   document.getElementById('appointmentModal').addEventListener('click', function(e) {
     if (e.target === this) {
+      closeModal();
+    }
+  });
+
+  // Fechar modal de agendamento quando o formulário for submetido
+  document.addEventListener('turbo:submit-end', function(event) {
+    if (event.detail.success) {
       closeModal();
     }
   });
