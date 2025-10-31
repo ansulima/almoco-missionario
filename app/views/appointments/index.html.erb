@@ -1,0 +1,119 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-center mb-8">
+    Agendamento de Almoços Missionários
+  </h1>
+  
+  <div class="max-w-4xl mx-auto">
+    <!-- Navegação do calendário -->
+    <div class="flex justify-between items-center mb-4">
+      <% prev_month = @current_month == 1 ? 12 : @current_month - 1 %>
+      <% prev_year = @current_month == 1 ? @current_year - 1 : @current_year %>
+      
+      <% if Date.new(@current_year, @current_month, 1) > Date.today.beginning_of_month %>
+        <%= link_to "← Anterior", appointments_path(month: prev_month, year: prev_year), class: "text-blue-500 hover:text-blue-700" %>
+      <% else %>
+        <span class="text-gray-400">← Anterior</span>
+      <% end %>
+      
+      <h2 class="text-2xl font-semibold">
+        <%= I18n.t('date.month_names')[@current_month] || Date::MONTHNAMES[@current_month] %> <%= @current_year %>
+      </h2>
+      
+      <% next_month = @current_month == 12 ? 1 : @current_month + 1 %>
+      <% next_year = @current_month == 12 ? @current_year + 1 : @current_year %>
+      <% limit_date = Date.today.next_month.end_of_month %>
+      
+      <% if Date.new(next_year, next_month, 1) <= limit_date %>
+        <%= link_to "Próximo →", appointments_path(month: next_month, year: next_year), class: "text-blue-500 hover:text-blue-700" %>
+      <% else %>
+        <span class="text-gray-400">Próximo →</span>
+      <% end %>
+    </div>
+    
+    <!-- Grid do calendário -->
+    <div class="grid grid-cols-7 gap-2">
+      <!-- Cabeçalho dos dias da semana -->
+      <% %w[Dom Seg Ter Qua Qui Sex Sáb].each do |day| %>
+        <div class="text-center font-semibold p-2 bg-gray-100"><%= day %></div>
+      <% end %>
+      
+      <!-- Dias do mês -->
+      <% date = Date.new(@current_year, @current_month, 1) %>
+      <% (date.beginning_of_month.beginning_of_week(:sunday)..date.end_of_month.end_of_week(:sunday)).each do |day| %>
+        <% appointment = @appointments.find_by(data: day) %>
+        <% is_current_month = day.month == @current_month %>
+        <% is_past = day < Date.today %>
+        <% is_available = is_current_month && !is_past && appointment.nil? %>
+        
+        <div class="
+          border rounded p-4 min-h-24 flex flex-col
+          <%= 'bg-gray-200 text-gray-500 cursor-not-allowed' if is_past || !is_current_month %>
+          <%= 'bg-white hover:bg-gray-50 cursor-pointer border-gray-300' if is_available %>
+          <%= 'bg-red-100 border-red-300' if appointment %>
+        " 
+        data-date="<%= day %>"
+        <%= "onclick=\"openModal('#{day}')\"".html_safe if is_available %>>
+          <div class="font-bold <%= 'text-gray-400' unless is_current_month %>">
+            <%= day.day %>
+          </div>
+          <% if appointment %>
+            <div class="text-sm mt-2 text-red-800 font-semibold">
+              <%= appointment.nome %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="appointmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+    <h3 class="text-2xl font-bold mb-4">Agendar Almoço</h3>
+    
+    <%= form_with model: Appointment.new, local: true, class: "space-y-4" do |f| %>
+      <%= f.hidden_field :data, id: "appointment_data" %>
+      
+      <div>
+        <%= f.label :nome, "Nome:", class: "block font-semibold mb-2" %>
+        <%= f.text_field :nome, required: true, class: "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+      </div>
+      
+      <div>
+        <%= f.label :telefone, "Telefone (WhatsApp):", class: "block font-semibold mb-2" %>
+        <%= f.text_field :telefone, required: true, placeholder: "(00) 00000-0000", class: "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+      </div>
+      
+      <div>
+        <%= f.label :endereco, "Endereço:", class: "block font-semibold mb-2" %>
+        <%= f.text_area :endereco, required: true, rows: 3, class: "w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+      </div>
+      
+      <div class="flex gap-4">
+        <%= f.submit "Confirmar Agendamento", class: "bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 flex-1 cursor-pointer" %>
+        <button type="button" onclick="closeModal()" class="bg-gray-300 px-6 py-2 rounded hover:bg-gray-400">
+          Cancelar
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  function openModal(date) {
+    document.getElementById('appointment_data').value = date;
+    document.getElementById('appointmentModal').classList.remove('hidden');
+  }
+  
+  function closeModal() {
+    document.getElementById('appointmentModal').classList.add('hidden');
+  }
+  
+  // Fechar modal ao clicar fora dele
+  document.getElementById('appointmentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+</script>
